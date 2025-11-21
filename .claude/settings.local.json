@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(sqlite3:*)",
+      "Bash(copy \"D:\\wjh\\tds-connector-ui-backend\\tds_connector.db\" \"D:\\wjh\\tds-connector-ui-backend\\tds_connector.db.backup\")",
+      "Bash(cp:*)",
+      "Bash(rm:*)",
+      "Bash(conda run:*)",
+      "Bash(C:/Users/17578/.conda/envs/tds-backend/python.exe:*)",
+      "Bash(curl:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

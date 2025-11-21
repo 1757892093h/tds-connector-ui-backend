@@ -1,25 +1,56 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from ..schemas import DIDGenerateResponse, DIDRegisterRequest
-from ..services.did_service import DIDService
+
+from ..config import settings
 from ..database import get_session
+from ..deps import get_current_user
+from ..models import Connector, DataSpace
+from ..schemas import ConnectorCreate, ConnectorOut
+from ..services.did_service import DIDService
 
-router = APIRouter(prefix="/identity", tags=["identity"])
+router = APIRouter(prefix=settings.api_prefix + "/identity", tags=["identity"])
 
-@router.post("/did/generate", response_model=DIDGenerateResponse)
+
+@router.post("/did/generate")
 async def generate_did():
     return DIDService.generate_did()
 
-@router.post("/did/register")
-async def register_did(request: DIDRegisterRequest, session: AsyncSession = Depends(get_session)):
-    success = await DIDService.register_did(session, request.did, request.didDocument)
-    if not success:
-        raise HTTPException(status_code=400, detail="DID already registered")
-    return {"status": "success", "did": request.did}
 
-@router.get("/did/{did}")
-async def get_did(did: str, session: AsyncSession = Depends(get_session)):
-    record = await DIDService.get_did(session, did)
-    if not record:
-        raise HTTPException(status_code=404, detail="DID not found")
-    return {"did": record.did, "didDocument": record.document}
+@router.post("/did/register", response_model=ConnectorOut)
+async def register_connector(
+    payload: ConnectorCreate,
+    session: AsyncSession = Depends(get_session),
+    current_user=Depends(get_current_user),
+):
+    result = await session.execute(select(DataSpace).where(DataSpace.id == payload.data_space_id))
+    data_space = result.scalar_one_or_none()
+    if not data_space:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Data space not found")
+
+    connector = Connector(
+        did=payload.did,
+        display_name=payload.display_name,
+        data_space_id=data_space.id,
+        owner_user_id=current_user.id,
+        did_document=payload.did_document,
+        status="registered",
+    )
+    session.add(connector)
+    await session.commit()
+    await session.refresh(connector)
+    return connector
+
+
+@router.get("/connectors", response_model=list[ConnectorOut])
+async def list_connectors(
+    data_space_id: str | None = None,
+    session: AsyncSession = Depends(get_session),
+    current_user=Depends(get_current_user),
+):
+    query = select(Connector).where(Connector.owner_user_id == current_user.id)
+    if data_space_id:
+        query = query.where(Connector.data_space_id == data_space_id)
+    result = await session.execute(query)
+    connectors = result.scalars().all()
+    return connectors
