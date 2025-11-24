@@ -1,17 +1,23 @@
-#启动后端
+## 1. 启动后端
+
+```bash
+# 激活环境并启动服务
 conda activate tds-backend
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8085
+```
 
-当前设计的模型结构：
+## 2. 当前设计的模型结构
+
+```text
 users
 ├─ id (uuid)
-├─ did (unique)                    # 登录/注册用的 DID
+├─ did (unique)                   # 登录/注册用的 DID
 ├─ username / email (可选)
 └─ created_at
 
 data_spaces
 ├─ id
-├─ code (如 "CN-SH")              # 你前端 DataSpaceSwitcher 用的 code
+├─ code (如 "CN-SH")              # 前端 DataSpaceSwitcher 用的 code
 └─ name
 
 connectors
@@ -43,3 +49,4 @@ contracts
 └─ created_at
 
 contract_events / monitoring (可选扩展)
+```

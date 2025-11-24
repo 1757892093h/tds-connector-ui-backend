@@ -1,51 +1,5 @@
 # TDS Connector API 测试指南
 
-## 📋 目录
-1. [代码检查结果](#代码检查结果)
-2. [环境准备](#环境准备)
-3. [安装依赖](#安装依赖)
-4. [初始化数据库](#初始化数据库)
-5. [启动服务器](#启动服务器)
-6. [测试方法](#测试方法)
-7. [API 端点说明](#api-端点说明)
-8. [故障排查](#故障排查)
-
----
-
-## ✅ 代码检查结果
-
-### 已修复的错误：
-
-1. **schemas.py** - ✅ 添加了缺失的类定义
-   - `RegisterRequest`
-   - `LoginRequest`
-   - `AuthResponse`
-
-2. **deps.py** - ✅ 添加了 JWT 异常处理
-   - `jwt.ExpiredSignatureError` - Token 过期处理
-   - `jwt.InvalidTokenError` - Token 无效处理
-
-3. **models.py** - ✅ 修复了已弃用的 `datetime.utcnow()`
-   - 改用 `datetime.now(timezone.utc)`
-
-4. **offerings.py** - ✅ 添加了缺失的 `json` 模块导入
-
-5. **contracts.py** - ✅ 修复了权限验证逻辑
-   - 改进了查询逻辑，确保用户只能看到自己的合约
-
-6. **requirements.txt** - ✅ 添加了缺失的依赖
-   - `passlib[bcrypt]==1.7.4` - 密码哈希库
-   - `python-multipart==0.0.9` - 文件上传支持
-
-### ⚠️ 已知限制（仅用于 Demo）：
-
-1. **security.py:24-26** - `verify_signature()` 未实现真实签名验证
-   ```python
-   # 当前实现：任何非空签名都通过
-   def verify_signature(did: str, signature: str, message: str) -> bool:
-       return bool(signature)
-   ```
-   **生产环境必须实现真实的公钥验签！**
 
 ---
 
@@ -63,11 +17,6 @@
 # 创建虚拟环境
 conda create -n tds-backend python=3.12
 conda activate tds-backend
-
-# 或使用 venv
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
 ```
 
 ---
@@ -82,23 +31,9 @@ cd D:\wjh\tds-connector-ui-backend
 pip install -r requirements.txt
 ```
 
-### 依赖列表说明：
-| 包名 | 版本 | 用途 |
-|------|------|------|
-| fastapi | 0.111.0 | Web 框架 |
-| uvicorn[standard] | 0.30.1 | ASGI 服务器 |
-| pydantic | 2.8.2 | 数据验证 |
-| SQLAlchemy | 2.0.32 | ORM 框架 |
-| aiosqlite | 0.20.0 | 异步 SQLite 驱动 |
-| pyjwt | 2.9.0 | JWT Token |
-| passlib[bcrypt] | 1.7.4 | 密码哈希 |
-| python-multipart | 0.0.9 | 文件上传 |
-
----
-
 ## 🗄️ 初始化数据库
 
-### 方法一：使用初始化脚本（推荐）
+### 使用初始化脚本
 
 ```bash
 python init_db.py
@@ -123,27 +58,9 @@ TDS Connector 数据库初始化
 ============================================================
 ```
 
-**⚠️ 重要：保存输出的 `data_space_id`，后续测试需要使用！**
+**重要：保存输出的 `data_space_id`，后续测试需要使用！**
 
-### 方法二：手动创建数据库
 
-创建文件 `create_tables.py`:
-```python
-import asyncio
-from app.database import engine, Base
-
-async def create_tables():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    print("数据库表创建成功！")
-
-asyncio.run(create_tables())
-```
-
-然后运行：
-```bash
-python create_tables.py
-```
 
 ---
 
@@ -176,7 +93,7 @@ INFO:     Application startup complete.
 
 ## 🧪 测试方法
 
-### 方法一：自动化测试脚本（推荐）
+### 方法一：自动化测试脚本
 
 ```bash
 # 安装测试依赖
@@ -294,17 +211,11 @@ curl -X GET http://localhost:8085/api/v1/identity/connectors \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
-### 方法四：使用 Postman
 
-1. 导入集合：创建新的 Collection
-2. 设置环境变量：
-   - `base_url`: `http://localhost:8085`
-   - `token`: (在登录后保存)
-3. 按照 API 端点说明依次测试
 
 ---
 
-## 📚 API 端点说明
+##  API 端点说明
 
 ### 认证模块 (auth)
 
@@ -336,82 +247,8 @@ curl -X GET http://localhost:8085/api/v1/identity/connectors \
 | POST | `/api/v1/contracts` | 创建合约 | ✅ |
 | GET | `/api/v1/contracts` | 列出合约 | ✅ |
 
----
 
-## 🔍 故障排查
-
-### 问题 1: 模块导入错误
-```
-ModuleNotFoundError: No module named 'passlib'
-```
-**解决方案**:
-```bash
-pip install passlib[bcrypt]
-```
-
-### 问题 2: 数据库错误
-```
-sqlalchemy.exc.OperationalError: no such table: users
-```
-**解决方案**:
-```bash
-python init_db.py
-```
-
-### 问题 3: Token 过期
-```
-{"detail": "Token has expired"}
-```
-**解决方案**: 重新登录获取新 Token
-
-### 问题 4: 端口被占用
-```
-ERROR: [Errno 10048] error while attempting to bind on address ('0.0.0.0', 8085)
-```
-**解决方案**:
-```bash
-# 方法 1: 更换端口
-uvicorn app.main:app --reload --port 8086
-
-# 方法 2: 查找并关闭占用进程 (Windows)
-netstat -ano | findstr :8085
-taskkill /PID <进程ID> /F
-```
-
-### 问题 5: Data Space 不存在
-```
-{"detail": "Data space not found"}
-```
-**解决方案**: 运行 `python init_db.py` 创建默认数据空间
-
-### 问题 6: JSON 解析错误
-```
-json.decoder.JSONDecodeError: Expecting value
-```
-**解决方案**: 检查 `storage_meta` 是否为有效的 JSON 字符串：
-```json
-{"file_path": "/data/test.csv", "protocol": "local"}
-```
-
----
-
-## 📝 测试检查清单
-
-- [ ] 依赖已安装 (`pip list`)
-- [ ] 数据库已初始化 (`init_db.py`)
-- [ ] 服务器正常启动 (http://localhost:8085/docs)
-- [ ] 可以生成 DID
-- [ ] 可以注册用户
-- [ ] 可以登录并获取 Token
-- [ ] Token 验证通过
-- [ ] 可以注册连接器
-- [ ] 可以创建数据产品
-- [ ] 可以创建合约
-- [ ] 所有列表接口正常
-
----
-
-## 🎯 下一步
+##  下一步
 
 1. **实现真实的签名验证**
    - 使用 cryptography 库实现 Ed25519 签名验证
@@ -437,14 +274,3 @@ json.decoder.JSONDecodeError: Expecting value
 
 ---
 
-## 📞 联系与支持
-
-如有问题，请检查：
-1. 日志输出
-2. Swagger UI 的错误信息
-3. 数据库文件是否存在
-4. .env 配置是否正确
-
----
-
-**祝测试顺利！** 🚀

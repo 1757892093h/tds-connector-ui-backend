@@ -18,7 +18,7 @@ def create_access_token(data: dict, expires_minutes: int | None = None) -> str:
     encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=ALGORITHM)
     return encoded_jwt
 
-
+#用 secret_key + HS256 解码 ,检查 exp 是否过期
 def decode_access_token(token: str) -> dict:
     return jwt.decode(token, settings.secret_key, algorithms=[ALGORITHM])
 def verify_signature(did: str, signature: str, message: str) -> bool:

@@ -23,11 +23,12 @@ async def register_connector(
     session: AsyncSession = Depends(get_session),
     current_user=Depends(get_current_user),
 ):
+    #查询 data_space_id 是否存在
     result = await session.execute(select(DataSpace).where(DataSpace.id == payload.data_space_id))
     data_space = result.scalar_one_or_none()
     if not data_space:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Data space not found")
-
+    #创建 Connector 记录
     connector = Connector(
         did=payload.did,
         display_name=payload.display_name,

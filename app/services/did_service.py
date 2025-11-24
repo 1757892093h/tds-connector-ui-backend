@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 class DIDService:
     @staticmethod
     def generate_did() -> dict:
-          # Demo-only DID generation
+          # demo did实现
           private_key = secrets.token_hex(32)
           did = f"did:example:connector{secrets.token_hex(8)}"
           public_key = hashlib.sha256(private_key.encode()).hexdigest()
