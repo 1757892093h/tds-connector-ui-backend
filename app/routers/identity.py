@@ -55,3 +55,20 @@ async def list_connectors(
     result = await session.execute(query)
     connectors = result.scalars().all()
     return connectors
+
+@router.get("/data-spaces", response_model=list[dict])
+async def list_data_spaces(
+    session: AsyncSession = Depends(get_session),
+):
+    """获取所有数据空间列表"""
+    result = await session.execute(select(DataSpace))
+    data_spaces = result.scalars().all()
+    return [
+        {
+            "id": str(ds.id),
+            "code": ds.code,
+            "name": ds.name,
+            "description": ds.description,
+        }
+        for ds in data_spaces
+    ]
