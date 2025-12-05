@@ -130,27 +130,143 @@ class DataOfferingOut(BaseModel):
         from_attributes = True
 
 
+  # -------- Policy Rule --------
+class PolicyRuleCreate(BaseModel):
+    type: Literal[
+        "access_period", "access_count", "identity_restriction",
+        "encryption", "ip_restriction", "transfer_limit", "qps_limit"
+    ]
+    name: str
+    description: str
+    value: str
+    unit: str | None = None
+    is_active: bool = True
+
+
+class PolicyRuleOut(BaseModel):
+    id: str
+    type: str
+    name: str
+    description: str
+    value: str
+    unit: str | None
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+  # -------- Policy Template --------
+class PolicyTemplateCreate(BaseModel):
+    connector_id: str
+    name: str
+    description: str
+    category: Literal["access", "usage", "retention", "compliance"]
+    severity: Literal["low", "medium", "high"]
+    enforcement_type: Literal["automatic", "manual", "hybrid"]
+    rules: list[PolicyRuleCreate]
+
+
+class PolicyTemplateOut(BaseModel):
+    id: str
+    connector_id: str
+    name: str
+    description: str
+    category: str
+    severity: str
+    enforcement_type: str
+    created_at: datetime
+    updated_at: datetime | None
+    rules: list[PolicyRuleOut]
+
+    class Config:
+        from_attributes = True
+
+
+  # -------- Contract Template --------
+class ContractTemplateCreate(BaseModel):
+    connector_id: str
+    name: str
+    description: str
+    contract_type: Literal["single_policy", "multi_policy"]
+    policy_template_ids: list[str]
+    status: Literal["draft", "active"] = "draft"
+
+
+class ContractTemplateOut(BaseModel):
+    id: str
+    connector_id: str
+    name: str
+    description: str
+    contract_type: str
+    status: str
+    usage_count: int
+    created_at: datetime
+    updated_at: datetime | None
+    policy_templates: list[PolicyTemplateOut]
+
+    class Config:
+        from_attributes = True
+
+
+  # -------- Data Request --------
+class DataRequestCreate(BaseModel):
+    data_offering_id: str
+    consumer_connector_id: str
+    purpose: str
+    access_mode: Literal["api", "download"]
+
+
+class DataRequestUpdate(BaseModel):
+    status: Literal["pending", "approved", "rejected", "completed"]
+
+
+class DataRequestOut(BaseModel):
+    id: str
+    data_offering_id: str
+    consumer_connector_id: str
+    purpose: str
+    access_mode: str
+    status: str
+    created_at: datetime
+    updated_at: datetime | None
+
+    class Config:
+        from_attributes = True
+
+
   # -------- Contract --------
 class ContractCreate(BaseModel):
     name: str
-    policy: str
     provider_connector_id: str
     consumer_connector_id: str
-    contract_address: str | None = None
-    status: str | None = None
+    contract_template_id: str
+    data_offering_id: str
+    data_request_id: str | None = None
     expires_at: datetime | None = None
+
+
+class ContractConfirm(BaseModel):
+    """消费者确认合约"""
+    action: Literal["confirm", "reject"]
 
 
 class ContractOut(BaseModel):
     id: str
     name: str
-    policy: str
     status: str
     provider_connector_id: str
     consumer_connector_id: str
+    contract_template_id: str
+    data_offering_id: str
+    data_request_id: str | None
     contract_address: str | None
+    blockchain_tx_id: str | None
+    blockchain_network: str
     expires_at: datetime | None
     created_at: datetime
+    updated_at: datetime | None
 
     class Config:
-        from_attributes = True 
+        from_attributes = True
