@@ -77,6 +77,7 @@ class ConnectorOut(BaseModel):
     display_name: str
     status: str
     data_space_id: str
+    did_document: dict
     created_at: datetime
 
     class Config:
