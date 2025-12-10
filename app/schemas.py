@@ -131,6 +131,26 @@ class DataOfferingOut(BaseModel):
         from_attributes = True
 
 
+class DataOfferingWithCountsOut(BaseModel):
+    """数据资源列表项，包含策略模板和合约模板数量"""
+    id: str
+    connector_id: str
+    title: str
+    description: str
+    data_type: str
+    access_policy: str
+    storage_meta: dict
+    registration_status: str
+    created_at: datetime
+    # 提供者连接器的策略模板数量
+    policy_templates_count: int = 0
+    # 提供者连接器的合约模板数量
+    contract_templates_count: int = 0
+
+    class Config:
+        from_attributes = True
+
+
   # -------- Policy Rule --------
 class PolicyRuleCreate(BaseModel):
     type: Literal[
@@ -206,6 +226,26 @@ class ContractTemplateOut(BaseModel):
     created_at: datetime
     updated_at: datetime | None
     policy_templates: list[PolicyTemplateOut]
+
+    class Config:
+        from_attributes = True
+
+
+class DataOfferingDetailOut(BaseModel):
+    """数据资源详情，包含策略模板和合约模板信息"""
+    id: str
+    connector_id: str
+    title: str
+    description: str
+    data_type: str
+    access_policy: str
+    storage_meta: dict
+    registration_status: str
+    created_at: datetime
+    # 提供者连接器的策略模板列表
+    policy_templates: list[PolicyTemplateOut] = []
+    # 提供者连接器的合约模板列表
+    contract_templates: list[ContractTemplateOut] = []
 
     class Config:
         from_attributes = True
