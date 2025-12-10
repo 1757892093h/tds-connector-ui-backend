@@ -53,12 +53,20 @@ async def create_offering(
 @router.get("", response_model=list[DataOfferingOut])
 async def list_offerings(
       connector_id: str | None = None,
+      public: bool = False,  # 新增参数：是否返回所有公开的 offerings（用于数据目录）
       session: AsyncSession = Depends(get_session),
       current_user=Depends(get_current_user),
   ):
-      query = select(DataOffering).join(Connector).where(Connector.owner_user_id == current_user.id)
-      if connector_id:
-          query = query.where(DataOffering.connector_id == connector_id)
+      # 如果 public=True，返回所有 offerings（用于数据消费页面的数据目录）
+      if public:
+          query = select(DataOffering)
+          if connector_id:
+              query = query.where(DataOffering.connector_id == connector_id)
+      else:
+          # 默认行为：只返回当前用户拥有的连接器的 offerings（用于数据提供页面）
+          query = select(DataOffering).join(Connector).where(Connector.owner_user_id == current_user.id)
+          if connector_id:
+              query = query.where(DataOffering.connector_id == connector_id)
       result = await session.execute(query)
       offerings = result.scalars().all()
       return offerings
