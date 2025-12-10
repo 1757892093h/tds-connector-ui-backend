@@ -12,7 +12,7 @@ connector2: Research Institute Connector (属于 Bob)
 2 个策略模板（属于 connector1)
 1 个合约模板（属于 connector1)
 2 个数据资源（属于 connector1)
-2 个数据请求
+2 个数据请求 (属于consumer)
 1 个数据合约
 """
 import asyncio
